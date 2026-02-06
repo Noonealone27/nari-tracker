@@ -220,9 +220,10 @@ def create_blank_form_pdf(title: str, body: str, footer: str) -> bytes:
 
     # Body: wrap text (center each line)
     max_chars_per_line = 60
+    body_line_height = body_font.size + 20  # extra spacing so sisters can write in blanks
     for para in body.split("\n"):
         if not para.strip():
-            current_y += body_font.size
+            current_y += body_line_height
             continue
         wrapped_lines = textwrap.wrap(para, width=max_chars_per_line)
         for line in wrapped_lines:
@@ -230,10 +231,10 @@ def create_blank_form_pdf(title: str, body: str, footer: str) -> bytes:
             line_w = bbox[2] - bbox[0]
             line_x = (width - line_w) // 2
             draw.text((line_x, current_y), line, font=body_font, fill="black")
-            current_y += body_font.size + 10
+            current_y += body_line_height
         current_y += 10
 
-    # Footer placement: dynamic but also respects bottom margin
+    # Footer placement: just below body text (not forced to bottom)
     if footer:
         line_height = footer_font.size + 8
 
@@ -245,10 +246,8 @@ def create_blank_form_pdf(title: str, body: str, footer: str) -> bytes:
             left_lines = textwrap.wrap(left_text, width=30) or [""]
             right_lines = textwrap.wrap(right_text, width=30) or [""]
             block_lines = max(len(left_lines), len(right_lines))
-            block_height = block_lines * line_height
-
-            # Dynamic Y: below body, but not above a bottom margin
-            footer_y = max(current_y + 200, height - block_height - 200)
+            # Place footer a little below the end of the body
+            footer_y = current_y + 200
 
             for i in range(block_lines):
                 y = footer_y + i * line_height
@@ -270,8 +269,7 @@ def create_blank_form_pdf(title: str, body: str, footer: str) -> bytes:
         # Case 2: single centered footer text with wrapping
         else:
             wrapped_footer = textwrap.wrap(footer, width=max_chars_per_line) or [""]
-            block_height = len(wrapped_footer) * line_height
-            footer_y = max(current_y + 200, height - block_height - 200)
+            footer_y = current_y + 200
 
             for line in wrapped_footer:
                 bbox = draw.textbbox((0, 0), line, font=footer_font)
@@ -304,8 +302,9 @@ def download_pdf_button(label: str, pdf_bytes: bytes, file_name: str) -> None:
 # Static Marathi texts for forms
 # ---------------------------
 HAMIPATRA_BODY = (
-    "मी, __________________________________________ (आधार क्र. ____________________) "
-    "राहणार __________________________________________, शपथपूर्वक लिहून देते की:\n\n"
+    "मी, ________________________________________________ (नाव)\n"
+    "आधार क्र. _____________________________________________\n"
+    "राहणार ________________________________________________, शपथपूर्वक लिहून देते की:\n\n"
     "१. माझ्या कुटुंबाचे एकत्रित वार्षिक उत्पन्न रु. २.५० लाख पेक्षा जास्त नाही.\n"
     "२. माझ्या कुटुंबातील कोणीही सदस्य आयकरदाता (Tax Payer) नाही.\n"
     "३. मी स्वतः किंवा माझ्या कुटुंबातील सदस्य सरकारी नोकरीत कार्यरत नाही.\n"
