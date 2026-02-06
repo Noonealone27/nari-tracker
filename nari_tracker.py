@@ -40,15 +40,15 @@ def inject_global_styles() -> None:
         padding: 0.25rem 0.75rem;
         border-radius: 999px;
         background: #fff0f0;
-        color: #c0392b;
+        color: #2b0c0c;
         font-size: 0.8rem;
         border: 1px solid #ffcdd2;
         margin-bottom: 0.75rem;
     }
 
     button[data-baseweb="tab"] {
-        font-weight: 600;
-        color: #D35400 !important;
+        font-weight: 700;
+        color: #000000 !important;
     }
 
     .nari-card {
@@ -102,9 +102,32 @@ def inject_global_styles() -> None:
 
     .footer-text {
         font-size: 0.8rem;
-        color: #7f8c8d;
+        color: #2b0c0c;
         text-align: center;
         margin-top: 2rem;
+    }
+
+    /* High-contrast text across the app */
+    body, p, li {
+        color: #2b0c0c !important;
+    }
+
+    .stMarkdown, .stMarkdown p, .stMarkdown li {
+        color: #2b0c0c !important;
+    }
+
+    label, .stTextInput label, .stNumberInput label, .stSelectbox label {
+        color: #2b0c0c !important;
+        font-weight: 600;
+    }
+
+    /* Info / success boxes with dark text */
+    div.stAlert {
+        color: #2b0c0c !important;
+    }
+
+    div.stAlert p, div.stAlert li, div.stAlert span {
+        color: #2b0c0c !important;
     }
     </style>
     """
@@ -176,8 +199,8 @@ def create_blank_form_pdf(title: str, body: str, footer: str) -> bytes:
     # Load Marathi font; fall back if missing
     try:
         header_font = ImageFont.truetype("MarathiFont.ttf", 56)  # ~20-24 pt
-        body_font = ImageFont.truetype("MarathiFont.ttf", 42)    # ~16-18 pt
-        footer_font = ImageFont.truetype("MarathiFont.ttf", 42)
+        body_font = ImageFont.truetype("MarathiFont.ttf", 45)    # slightly larger body
+        footer_font = ImageFont.truetype("MarathiFont.ttf", 45)
     except Exception:
         header_font = ImageFont.load_default()
         body_font = ImageFont.load_default()
@@ -210,16 +233,52 @@ def create_blank_form_pdf(title: str, body: str, footer: str) -> bytes:
             current_y += body_font.size + 10
         current_y += 10
 
-    # Footer near bottom
+    # Footer placement: dynamic but also respects bottom margin
     if footer:
-        wrapped_footer = textwrap.wrap(footer, width=max_chars_per_line)
-        footer_y = height - (len(wrapped_footer) * (footer_font.size + 8)) - 200
-        for line in wrapped_footer:
-            bbox = draw.textbbox((0, 0), line, font=footer_font)
-            line_w = bbox[2] - bbox[0]
-            line_x = (width - line_w) // 2
-            draw.text((line_x, footer_y), line, font=footer_font, fill="black")
-            footer_y += footer_font.size + 8
+        line_height = footer_font.size + 8
+
+        # Case 1: "left    right" format for date/signature alignment
+        if "    " in footer:
+            left_text, right_text = footer.split("    ", 1)
+
+            # Wrap left/right parts independently
+            left_lines = textwrap.wrap(left_text, width=30) or [""]
+            right_lines = textwrap.wrap(right_text, width=30) or [""]
+            block_lines = max(len(left_lines), len(right_lines))
+            block_height = block_lines * line_height
+
+            # Dynamic Y: below body, but not above a bottom margin
+            footer_y = max(current_y + 200, height - block_height - 200)
+
+            for i in range(block_lines):
+                y = footer_y + i * line_height
+
+                # Left side
+                if i < len(left_lines):
+                    left_line = left_lines[i]
+                    left_x = 260
+                    draw.text((left_x, y), left_line, font=footer_font, fill="black")
+
+                # Right side
+                if i < len(right_lines):
+                    right_line = right_lines[i]
+                    bbox_r = draw.textbbox((0, 0), right_line, font=footer_font)
+                    right_w = bbox_r[2] - bbox_r[0]
+                    right_x = width - right_w - 260
+                    draw.text((right_x, y), right_line, font=footer_font, fill="black")
+
+        # Case 2: single centered footer text with wrapping
+        else:
+            wrapped_footer = textwrap.wrap(footer, width=max_chars_per_line) or [""]
+            block_height = len(wrapped_footer) * line_height
+            footer_y = max(current_y + 200, height - block_height - 200)
+
+            for line in wrapped_footer:
+                bbox = draw.textbbox((0, 0), line, font=footer_font)
+                line_w = bbox[2] - bbox[0]
+                line_x = (width - line_w) // 2
+                draw.text((line_x, footer_y), line, font=footer_font, fill="black")
+                footer_y += line_height
 
     pdf_buffer = io.BytesIO()
     image.save(pdf_buffer, "PDF")
