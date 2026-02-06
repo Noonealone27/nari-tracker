@@ -456,6 +456,33 @@ def render_tab_help() -> None:
 # Monetization Footer
 # ---------------------------
 def render_footer() -> None:
+    # Separator and new Help & Finance section
+    st.markdown("---")
+    st.header("💸 महत्वाची सुविधा (Free Service)")
+
+    col_left, col_right = st.columns(2)
+
+    with col_left:
+        st.info("**बँक खाते नाही? (For DBT)**")
+        st.markdown('<div class="pink-button">', unsafe_allow_html=True)
+        st.link_button(
+            "🏦 कोटक झिरो बॅलन्स खाते",
+            url="https://bitli.in/QeL2p5a",
+            use_container_width=True,
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with col_right:
+        st.info("**अर्जंट पैशांची गरज आहे?**")
+        st.markdown('<div class="pink-button">', unsafe_allow_html=True)
+        st.link_button(
+            "⚡ Olyv (SmartCoin) लोन",
+            url="https://bitli.in/4muBG43",
+            use_container_width=True,
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # Existing CTA
     st.markdown(
         """
         <div class="footer-text">
@@ -470,10 +497,20 @@ def render_footer() -> None:
         st.markdown('<div class="pink-button">', unsafe_allow_html=True)
         st.link_button(
             "🏦 Kotak 811 खाते उघडा (Fast DBT)",
-            url="#",
+            url="https://bitli.in/QeL2p5a",
             use_container_width=True,
         )
         st.markdown("</div>", unsafe_allow_html=True)
+
+    # Final disclaimer
+    st.markdown(
+        """
+        <div class="footer-text">
+            <p>Disclaimer: This is an educational tool. Not associated with Govt of Maharashtra.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 # ---------------------------
